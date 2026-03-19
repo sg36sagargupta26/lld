@@ -14,3 +14,6 @@ Q>Can a user send 2× limit in ~2 seconds?
 yeah in the current implementation it clears all the details every minute, so instead of Map<userid, count>
 we have now map<userId, List<TimeStamps>> where we check if the size is greater than allowed requests
 also we have updated the scheduled task to remove users if they are not a part of active time region
+
+Q>What happens under: 1000 concurrent requests for same user and other atomicity concerns
+A> we were missing a syncronised block for timestamps array

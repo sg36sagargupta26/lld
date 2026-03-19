@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,13 +41,15 @@ public class RateLimitFilter implements Filter {
 
         if (uri.contains("hello") && userId != null) {
             long now = System.currentTimeMillis();
-            List<Long> timestamps = userCache.computeIfAbsent(userId, _ -> new CopyOnWriteArrayList<>());
-            timestamps.removeIf(t -> t < (now - WINDOW_SIZE_MS));
-            timestamps.add(now);
-            if (timestamps.size() >= MAX_REQUESTS) {
-                response.setStatus(429);
-                response.getWriter().write("Rate limit exceeded. Try again later.");
-                return;
+            List<Long> timestamps = userCache.computeIfAbsent(userId, _ -> new LinkedList<>());
+            synchronized (timestamps) {
+                timestamps.removeIf(t -> t < (now - WINDOW_SIZE_MS));
+                timestamps.add(now);
+                if (timestamps.size() >= MAX_REQUESTS) {
+                    response.setStatus(429);
+                    response.getWriter().write("Rate limit exceeded. Try again later.");
+                    return;
+                }
             }
         }
         chain.doFilter(req, res);
