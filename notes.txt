@@ -1,0 +1,16 @@
+Design a Rate Limiter in Spring Boot
+
+there are two major ways to implement rate limiter in Spring boot, that is either by using handlerinterceptor or filter
+Lets create a very simple and naive rate limiter we are using concurrent hashmap and we have created a scheduled task which clears entire map every minute
+
+We set say for the details(say ip/customerID) as key to map and when the customer say hits our api we trigger it and from there we are using map.merge to get current counts
+and if its more than certain limit we throw 429 status too many requests
+
+There are small problems with the implementation:
+
+Q>What happens at 59th second vs 1st second of next minute?
+Q>Can a user send 2× limit in ~2 seconds?
+
+yeah in the current implementation it clears all the details every minute, so instead of Map<userid, count>
+we have now map<userId, List<TimeStamps>> where we check if the size is greater than allowed requests
+also we have updated the scheduled task to remove users if they are not a part of active time region
