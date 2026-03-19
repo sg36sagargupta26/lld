@@ -17,3 +17,6 @@ also we have updated the scheduled task to remove users if they are not a part o
 
 Q>What happens under: 1000 concurrent requests for same user and other atomicity concerns
 A> we were missing a syncronised block for timestamps array
+
+Q>Why are you using a copy-on-write structure…when you are already locking it?
+thats correct we don't need sycronised block on copy on write list, so I have replaced with arrayDeque
