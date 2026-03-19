@@ -9,11 +9,18 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 
 @Component
 public class RateLimitFilter implements Filter {
     private final Map<String, Integer> requestCounts = new ConcurrentHashMap<>();
+
+    public RateLimitFilter() {
+        Executors.newSingleThreadScheduledExecutor()
+                .scheduleAtFixedRate(requestCounts::clear, 0, 1, TimeUnit.MINUTES);
+    }
 
     @Override
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
