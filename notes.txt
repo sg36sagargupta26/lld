@@ -20,3 +20,8 @@ A> we were missing a syncronised block for timestamps array
 
 Q>Why are you using a copy-on-write structure…when you are already locking it?
 thats correct we don't need sycronised block on copy on write list, so I have replaced with arrayDeque
+
+Q>Multi-instance consistency
+To ensure multi instance consistency instead of using any data structure I am using database table to store user id, and time since now we have decoupled
+the storage area and code this will ensure multi instance consistency
+added and index for faster look up and a cron job every hour to clear the details
