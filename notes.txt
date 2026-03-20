@@ -25,3 +25,7 @@ Q>Multi-instance consistency
 To ensure multi instance consistency instead of using any data structure I am using database table to store user id, and time since now we have decoupled
 the storage area and code this will ensure multi instance consistency
 added and index for faster look up and a cron job every hour to clear the details
+
+Q> Database might not be ideal for rate limiting because...
+database might not be ideal here as redis is in memory store and it saves time for read and write instead of doing disk IO, also redis has inbuild functionality
+to clean data natively and is not compute heavy as DB delete

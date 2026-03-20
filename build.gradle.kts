@@ -23,6 +23,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa:4.1.0-M2")
     implementation("org.springframework.boot:spring-boot-starter-restclient:4.1.0-M2")
     implementation("org.postgresql:postgresql:42.7.9")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis:4.1.0-M2")
 	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
