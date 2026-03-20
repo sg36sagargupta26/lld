@@ -29,3 +29,7 @@ added and index for faster look up and a cron job every hour to clear the detail
 Q> Database might not be ideal for rate limiting because...
 database might not be ideal here as redis is in memory store and it saves time for read and write instead of doing disk IO, also redis has inbuild functionality
 to clean data natively and is not compute heavy as DB delete
+
+Q> This is not atomic and can break under concurrency and also we can reduce network call...
+by creating a custom redis lua script(I am unaware of it, how to write one) which can create a single transaction thing which offloads all the computing to redis
+which makes all the above operation atomic and reduces network call
