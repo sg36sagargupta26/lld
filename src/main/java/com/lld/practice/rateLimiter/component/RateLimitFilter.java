@@ -1,6 +1,6 @@
-package com.lld.practice.component;
+package com.lld.practice.rateLimiter.component;
 
-import com.lld.practice.service.RateLimitService;
+import com.lld.practice.rateLimiter.service.RateLimitService;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

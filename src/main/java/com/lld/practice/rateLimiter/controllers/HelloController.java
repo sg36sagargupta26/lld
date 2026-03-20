@@ -1,4 +1,4 @@
-package com.lld.practice.controllers;
+package com.lld.practice.rateLimiter.controllers;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;

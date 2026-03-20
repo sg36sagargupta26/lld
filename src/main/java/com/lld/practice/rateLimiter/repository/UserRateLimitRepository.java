@@ -1,7 +1,7 @@
-package com.lld.practice.repository;
+package com.lld.practice.rateLimiter.repository;
 
-import com.lld.practice.entity.UserRateLimit;
-import com.lld.practice.modal.UserRateLimitId;
+import com.lld.practice.rateLimiter.entity.UserRateLimit;
+import com.lld.practice.rateLimiter.modal.UserRateLimitId;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

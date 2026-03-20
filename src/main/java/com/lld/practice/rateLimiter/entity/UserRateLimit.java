@@ -1,6 +1,6 @@
-package com.lld.practice.entity;
+package com.lld.practice.rateLimiter.entity;
 
-import com.lld.practice.modal.UserRateLimitId;
+import com.lld.practice.rateLimiter.modal.UserRateLimitId;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 

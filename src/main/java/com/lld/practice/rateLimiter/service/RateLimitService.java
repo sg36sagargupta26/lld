@@ -1,10 +1,9 @@
-package com.lld.practice.service;
+package com.lld.practice.rateLimiter.service;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
 
 @Service
 public class RateLimitService {

@@ -1,4 +1,4 @@
-package com.lld.practice.modal;
+package com.lld.practice.rateLimiter.modal;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
