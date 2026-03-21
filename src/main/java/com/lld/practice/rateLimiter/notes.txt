@@ -1,0 +1,94 @@
+Design a Rate Limiter in Spring Boot
+
+there are two major ways to implement rate limiter in Spring boot, that is either by using handlerinterceptor or filter
+Lets create a very simple and naive rate limiter we are using concurrent hashmap and we have created a scheduled task which clears entire map every minute
+
+We set say for the details(say ip/customerID) as key to map and when the customer say hits our api we trigger it and from there we are using map.merge to get current counts
+and if its more than certain limit we throw 429 status too many requests
+
+There are small problems with the implementation:
+
+Q>What happens at 59th second vs 1st second of next minute?
+Q>Can a user send 2× limit in ~2 seconds?
+
+yeah in the current implementation it clears all the details every minute, so instead of Map<userid, count>
+we have now map<userId, List<TimeStamps>> where we check if the size is greater than allowed requests
+also we have updated the scheduled task to remove users if they are not a part of active time region
+
+Q>What happens under: 1000 concurrent requests for same user and other atomicity concerns
+A> we were missing a syncronised block for timestamps array
+
+Q>Why are you using a copy-on-write structure…when you are already locking it?
+thats correct we don't need sycronised block on copy on write list, so I have replaced with arrayDeque
+
+Q>Multi-instance consistency
+To ensure multi instance consistency instead of using any data structure I am using database table to store user id, and time since now we have decoupled
+the storage area and code this will ensure multi instance consistency
+added and index for faster look up and a cron job every hour to clear the details
+
+Q> Database might not be ideal for rate limiting because...
+database might not be ideal here as redis is in memory store and it saves time for read and write instead of doing disk IO, also redis has inbuild functionality
+to clean data natively and is not compute heavy as DB delete
+
+Q> This is not atomic and can break under concurrency and also we can reduce network call...
+by creating a custom redis lua script(I am unaware of it, how to write one) which can create a single transaction thing which offloads all the computing to redis
+which makes all the above operation atomic and reduces network call
+
+
+
+
+
+Q1>You implemented sliding window using Redis ZSET.
+	•	What problem it solves better than fixed window
+	•	And one tradeoff you consciously accepted
+A> Sliding window is more accurate at higher no of requests when near the bounds of window
+I have accepted a tradeoff of higher acccuracy in place of simpler and less memory requirement
+Q>Follow up : Give me a numerical example
+A> say we have limit like 2 req/mins, and some one can by pass the limits say by sending all most all the request at the end of 1st time window and the next
+on the next time window
+say window size is 1 min say limit is 2 req/min : let us say 12:00:58, 12:00:59, 12:01:01 and 12:01:02 here all four request will be allowed as we are checking
+every min, but in sliding window only first two will be allowed
+
+Q2> Why  are you using ZSET specifically?
+Why not:
+	•	List?
+	•	Sorted list in app memory?
+	•	Redis List?
+A> Zset stores data sorted by score, and it allows for faster look up (O(log N)) compared to redis list which will take O(N)
+Sorted List in app memory is okay if the volumes are small and single instance is running at a time, but when the volumes increase it impacts the program
+slowing it down, also it can't handle multiple instance if two request hit two different instance than it will bypass the rate limiting
+ZSET is preferred because it efficiently supports fast checking and deletion, which is critical for faster retrieal and checking the data
+Q> Follow up: If I force you to use Redis List, what operation becomes inefficient and why?
+The major one will be finding all the operation before the window start, and deleting them it can not efficiently find them
+
+Q3>Before Lua, your flow had race condition.
+Walk me through a real interleaving scenario where:
+   	•	limit = 10
+   	•	2 concurrent requests
+   	•	system allows 11
+
+A> current implementation: getCount -> check if less than limit -> add timestamp -> allow the request
+problem here arises when getcount is access by two request concurrently they both get 9 so both are allowed
+zcard -> size of sorted set , zadd-> add to redis
+	•	Initial state: zcard = 9
+	•	Thread A → zcard  = 9
+	•	Thread B → zcard = 9
+	•	Thread A → passes check
+	•	Thread B → passes check
+	•	Thread A → zadd → zcard = 10
+	•	Thread B → zadd → zcard = 11 (fails)
+Q> Follow up: Why do we still prefer Lua script over MULTI/EXEC for this use case?
+A> the problem with multi/Exec is that it can not use intermediate result it needs to do multiple network round trips
+the advantage of lua script is it allows to use intermediate result and it condenses all the operation s in a single operations
+so it only needs a single network trip
+Q>Follow up: If you did try using WATCH + MULTI: What exactly would happen under high concurrency?
+A> WATCH + MULTI uses optimistic locking, so under high concurrency many transactions fail and need retries, leading to high latency and reduced throughput.
+Lua avoids this by executing everything atomically in one step without retries.
+Q> Follow up: Why exactly is Lua atomic in Redis?
+Lua is atomic because redis is single threaded and it blocks all other client code executions while lua is running
+Q> Follow up:  If your Lua script takes 200ms to execute, What happens to other Redis requests?
+A> Since redis is single threaded, it will block other requests, freezing them for a while and increasing latency
+if  other request stay in queue for too long redis will start throwing busy error
+
+
+
