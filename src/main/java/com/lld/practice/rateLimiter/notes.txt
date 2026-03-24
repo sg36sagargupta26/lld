@@ -90,5 +90,22 @@ Q> Follow up:  If your Lua script takes 200ms to execute, What happens to other 
 A> Since redis is single threaded, it will block other requests, freezing them for a while and increasing latency
 if  other request stay in queue for too long redis will start throwing busy error
 
+Q>  What are your bottlenecks in Redis approach in case 50K request/sec, 10k User and burst traffic?
+A: there are multiple bottlenecks in case of 50k rps and 10k user, usually each request has a memory footprint approximately (20bytes(userid) + 12 bytes(value: timestamp + noise)+ 8bytes(score)) roughly
+40 bytes, so approx 40*50k*60 ~ 150MB so approximately, as not all memory is free instantly we need a buffer.
+So the major challenge for our redis will be to free memory, so we need a custom memory eviction, and also we need to enable lazy evictions so it slowly evicts
+automatically
+The other bottleneck is processing a request, we need a chip powerful enough process each request under(60s/50k) ~ 1.2 ms, so to be on safer side we need to be
+under 1ms
 
+How can you redesign system so that:
+
+Q> We don’t store every request (timestamp), but still enforce rate limiting
+A> For this we need to implement token bucket as token bucket only needs to store a token count and a timestamp. Current approach requires
+storing every timestamp, which results in better burst handling to current approach
+In terms of
+    - accuracy : sliding window is way more accurate as its the exact solution, but token bucket is a very good approximation
+    - memory usage: token bucket has very low memory as it needs only token count and timestamp, but sliding window needs all timestamps(size == max request)
+    - burst handling: token bucket is specially designed to handle burst up to its buket capacity, sliding window enforces a very limit and burst are capped
+      by window limit
 
